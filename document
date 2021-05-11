@@ -1,0 +1,91 @@
+=============================================== Parking Scehema ==============================
+Parking Area Schema
+{
+	owner:{},      //admin
+	capacity:{}    //20
+	availabilty:{} // 20	
+	accoupied:{} // 0
+	users:[usersScehema]
+	createdAt:{}   // time of parking slot created
+
+}
+
+
+userScehma
+{
+	name:{}
+	authID:{} 
+	starteTime:{}
+	endTime:{}
+	status:{}
+	carnumber:{}
+	slots:{}
+	
+}
+
+ParkingAPIhit =======? status pending/Approved/cancel
+isExpired =============? 
+
+
+
+	[
+		owner: "0000000000000003333",
+		parkingID: 00000000123,
+		name:  "DeluxParking",
+		capacity: 20    
+		availabilty: 20	 -2 =18
+		accoupied: 0   +2
+		users:{	
+			[
+				name:"AR"
+				authID:"0000000001" 
+				startedate: 12/4/2021 : 1:07
+				endDate: 13/4/2021 : 1:07
+				status:  pending/active/canceled
+				carnumber:2233,
+				slote:2,
+				isExpired:  true/false, ==========> AfterSearch 1) deletekrdo 2)cron node/job
+			
+			],
+			[
+				name:"AS"
+				authID:"00000000201" 
+				startedate: 12/4/2021 : 1:07
+				endDate: 13/4/2021 : 1:07
+				status:  pending/active/canceled
+				carnumber:A333,
+				slote:4,
+				isExpired:  true/false, ==========> AfterSearch 1) deletekrdo 2)cron node/job
+			
+			],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+		}
+		createdAt: 11/4/3 12:51
+	]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
