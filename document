@@ -2,6 +2,8 @@
 Parking Area Schema
 {
 	owner:{},      //admin
+	parkingID: {},
+	name:  {},
 	capacity:{}    //20
 	availabilty:{} // 20	
 	accoupied:{} // 0
@@ -70,6 +72,41 @@ isExpired =============?
 		}
 		createdAt: 11/4/3 12:51
 	]
+
+
+======================================== APIS  ==========================================
+                             =========AdminsAPIs=========
+1) create parking Area    /api/admin/parkings    POST   Private/admin
+
+			body.params {
+			capacity,user:[],parkingname
+				}
+2) List of Parkings  /api/admin/parkings    GET   Private/admin
+(List of parking req)
+
+3)approved parking slot api /api/admin/parkings/parking:id/request data= {status:true/false} (  /api/admin/parkings    POST   Private/admin )  if available,and 3times =>  updtae Status and calulate occupied
+
+
+ =========USersAPIs=========
+1) book Parking Slots   /api/user/parkings    POST   Private  data = slot,start,end 
+
+
+
+availabilty:{    ============ virtual
+	type:Number,
+	required :true,
+	value:capacity-accoupied,
+	
+}
+
+accoupied:{
+	type:Number,
+	required :true,
+	default:capacity,
+	
+}
+
+2) get my parkings /api/user/parking GET private 
 
 
 
