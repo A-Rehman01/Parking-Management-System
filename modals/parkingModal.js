@@ -7,6 +7,10 @@ const customerSchema = mongoose.Schema(
       required: true,
       ref: 'User',
     },
+    parkingID: {
+      type: String,
+      required: true,
+    },
     name: {
       type: String,
       required: true,
@@ -45,6 +49,8 @@ const customerSchema = mongoose.Schema(
   },
   { timestamps: true }
 );
+const Customer = mongoose.model('Customer', customerSchema);
+export { Customer };
 
 const parkingSchema = mongoose.Schema(
   {
@@ -70,7 +76,13 @@ const parkingSchema = mongoose.Schema(
       //   },
       default: 0,
     },
-    customers: [customerSchema],
+    // customers: [customerSchema],
+    customers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Customer',
+      },
+    ],
   },
   {
     timestamps: true,

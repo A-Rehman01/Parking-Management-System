@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-
+// import { customerSchema } from './parkingModal.js';
 const userSchema = mongoose.Schema(
   {
     name: {
@@ -21,6 +21,13 @@ const userSchema = mongoose.Schema(
       required: true,
       default: false,
     },
+    // parkings: [customerSchema],
+    parkings: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Customer',
+      },
+    ],
   },
   { timestamps: true }
 );
