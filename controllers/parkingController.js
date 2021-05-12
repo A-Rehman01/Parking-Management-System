@@ -33,6 +33,19 @@ const getParkings = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Get All Parkings Areas From User Side
+// @route   GET /api/parking/userside
+// @access  Private/Admin
+const getParkingsFromUserSide = asyncHandler(async (req, res) => {
+  const parking = await Parking.find({}).select('-customers');
+  if (parking) {
+    res.json({ success: true, data: parking });
+  } else {
+    res.status(400);
+    throw new Error('Not Parking Found');
+  }
+});
+
 // @desc    create Booking in Parking Area
 // @route   POSt /api/parking/
 // @access  Private
@@ -57,4 +70,4 @@ const createBooking = asyncHandler(async (req, res) => {
   }
 });
 
-export { createParking, getParkings, createBooking };
+export { createParking, getParkings, createBooking, getParkingsFromUserSide };
