@@ -2,7 +2,8 @@ import express from 'express';
 import dotenv from 'dotenv';
 import colors from 'colors';
 import morgan from 'morgan';
-
+import usersRoutes from './routes/userRoutes.js';
+import parkingRoutes from './routes/parkingRoutes.js';
 import { errorHandler, notFound } from './middlerwares/errorMiddleware.js';
 
 //DB
@@ -29,6 +30,8 @@ app.get('/', (req, res) => {
 });
 
 //Routes
+app.use('/api/users', usersRoutes);
+app.use('/api/parkings', parkingRoutes);
 
 //Custom_Errorhandling
 app.use(notFound);

@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "node server",
-    "server": "nodemon server"
+    "server": "nodemon server",
+    "data:import": "node seeder",
+    "data:destroy": "node seeder -d"
   },
   "author": "AR",
   "license": "ISC",
@@ -17,6 +19,7 @@
     "express": "^4.17.1",
     "express-async-handler": "^1.1.4",
     "jsonwebtoken": "^8.5.1",
+    "moment": "^2.29.1",
     "mongoose": "^5.12.8",
     "morgan": "^1.10.0"
   },
