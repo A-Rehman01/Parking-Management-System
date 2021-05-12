@@ -80,6 +80,7 @@ const createBooking = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id).select('-password');
   const customer = await Customer.find({
     customerID: req.user._id,
+    isExpired: false,
     parkingID,
     $or: [
       {
