@@ -34,7 +34,10 @@ const getParkings = asyncHandler(async (req, res) => {
   });
 
   if (parking.length) {
-    res.json({ success: true, data: parking });
+    res.json({
+      success: true,
+      data: { ...parking, availability: parking.availability },
+    });
   } else {
     res.status(400);
     throw new Error('Not Parking Found');
@@ -77,146 +80,146 @@ const getMyParking = asyncHandler(async (req, res) => {
 // @access  Private
 const createBooking = asyncHandler(async (req, res) => {
   const { parkingID, startdate, enddate, carnumber, slots } = req.body;
-  const pakStartDate = moment(startdate).format();
-  const pakEndDate = moment(enddate).format();
-
   const parking = await Parking.findById(parkingID);
   const user = await User.findById(req.user._id).select('-password');
-
-  const customer = await Customer.find({
+  const totalCustomerBooking = await Customer.find({
     customerID: req.user._id,
     isExpired: false,
     parkingID,
-    // $or: [
-    //   {
-    //     $and: [
-    //       { startdate: { $gte:  startdate } }, // 2  1
-    //       { enddate: { $lte: startdate } }, //  3    1
-    //     ],
-    //   },
-    //   {
-    //     $and: [
-    //       { startdate: { $gte: enddate } }, // 2   3
-    //       { enddate: { $lte: enddate } }, //    3  3
-    //     ],
-    //   },
-    //   {
-    //     $and: [
-    //       { startdate: { $lte: startdate } }, //  2   1
-    //       { enddate: { $gte: enddate } },  // 3  3
-    //     ],
-    //   },
-    // ],
+    $or: [
+      {
+        $and: [
+          { startdate: { $lte: startdate } },
+          { enddate: { $gt: startdate } },
+        ],
+      },
+      {
+        $and: [{ startdate: { $lt: enddate } }, { enddate: { $gte: enddate } }],
+      },
+      {
+        $and: [
+          { startdate: { $gte: startdate } },
+          { enddate: { $lte: enddate } },
+        ],
+      },
+    ],
   });
 
-  if (parking) {
-    var check = 0;
-    const count = customer.forEach((obj) => {
-      if (
-        (moment(obj.startdate).format() <= moment(startdate).format() &&
-          moment(obj.enddate).format() > moment(startdate).format()) ||
-        (moment(obj.startdate).format() < moment(enddate).format() &&
-          moment(obj.enddate).format() >= moment(enddate).format()) ||
-        (moment(obj.startdate).format() <= moment(startdate).format() &&
-          moment(obj.enddate).format() >= moment(enddate).format())
-      ) {
-        check++;
-        // return obj;
-        console.log(obj);
-      }
-    });
+  if (parking && Number(parking?.availability) >= Number(slots)) {
+    // var check = 0;
+    // const count = totalCustomerBooking.forEach((obj) => {
+    //   if (
+    //     (moment(obj.startdate).format() <= moment(startdate).format() &&
+    //       moment(obj.enddate).format() > moment(startdate).format()) ||
+    //     (moment(obj.startdate).format() < moment(enddate).format() &&
+    //       moment(obj.enddate).format() >= moment(enddate).format()) ||
+    //     (moment(obj.startdate).format() >= moment(startdate).format() &&
+    //       moment(obj.enddate).format() <= moment(enddate).format())
+    //   ) {
+    //     check++;
+    //     console.log(obj);
+    //   }
+    // });
 
-    //   3        >=       1
-    //    6       <=       1   false
-    //   3        >=       5   False
-    //    6       <=       5
-    //   3        <=       1  False
-    //    6       >=       5
-
-    console.log(count);
-    if (check >= 3) {
+    if (totalCustomerBooking.length >= 3) {
       res.status(400);
-      throw new Error('You alreday book 3 times in this Parking Area');
+      throw new Error('you already book 3 times in these time slots');
     } else {
       //create Customer
-      // const customer = await Customer.create({
-      //   customerID: req.user._id,
-      //   name: req.user.name,
-      //   startdate,
-      //   enddate,
-      //   carnumber,
-      //   slots,
-      //   parkingID,
-      // });
+      const customer = await Customer.create({
+        customerID: req.user._id,
+        name: req.user.name,
+        startdate,
+        enddate,
+        carnumber,
+        slots,
+        parkingID,
+        parkingname: parking?.parkingname,
+      });
+      try {
+        const sess = await mongoose.startSession();
+        await sess.startTransaction();
+        parking.customers.push(customer._id);
+        await parking.save();
+        user.parkings.push(customer._id);
+        await user.save();
+        sess.commitTransaction();
+      } catch (error) {
+        console.log(error);
+        res.status(400);
+        throw new Error('Create  Parking Failed');
+      }
       res.json({
-        success: `You are right ${check} is less than 3`,
-        data: count,
+        success: true,
+        data: parking,
       });
     }
   } else {
     res.status(400);
-    throw new Error('Not Parking Found');
+    throw new Error(
+      !parking
+        ? 'Not Parking Found'
+        : Number(parking?.availability) === 0
+        ? 'Parking is Full Now'
+        : `Only ${parking?.availability} Slots are available`
+    );
   }
-
-  // if (customer.length >= 3) {
-  //   console.log(customer.length);
-  //   res.status(400);
-  //   throw new Error('You alreday book 3 times in this Parking Area');
-  // } else {
-  //   console.log(customer.length);
-
-  //   if (parking) {
-  //     const customer = await Customer.create({
-  //       customerID: req.user._id,
-  //       name: req.user.name,
-  //       startdate,
-  //       enddate,
-  //       carnumber,
-  //       slots,
-  //       parkingID,
-  //     });
-  //     try {
-  //       const sess = await mongoose.startSession();
-  //       await sess.startTransaction();
-  //       parking.customers.push(customer._id);
-  //       await parking.save();
-  //       user.parkings.push(customer._id);
-  //       await user.save();
-  //       sess.commitTransaction();
-  //     } catch (error) {
-  //       console.log(error);
-  //       res.status(400);
-  //       throw new Error('Create  Parking Failed');
-  //     }
-  //     res.json({ success: true, data: parking });
-  //   } else {
-  //     res.status(400);
-  //     throw new Error('Not Parking Found');
-  //   }
-  // }
 });
 
 // @desc    Accept Booking in Parking Area
 // @route   POSt /api/parking/accept
 // @access  Private/Admin
 const acceptBooking = asyncHandler(async (req, res) => {
-  const { parkingID } = req.body;
-  const parking = await Parking.findById(parkingID);
-  if (parking) {
-    let createCustomer = {
-      customerID: req.user._id,
-      name: req.user.name,
-      startdate,
-      enddate,
-      carnumber,
-      slots,
-    };
-    parking.customers.push(createCustomer);
-    await parking.save();
-    res.json({ success: true, data: parking });
+  const customer = await Customer.findById(req.params.id);
+
+  if (customer && customer.status === 'pending') {
+    try {
+      await customer.changeIsExpiredStatus(customer.parkingID);
+      // await Customer.findByIdAndUpdate(req.params.id, { status: 'active' });
+      customer.status = 'active';
+      await customer.save();
+      const { slots, parkingID } = customer;
+      const parking = await Parking.findById(parkingID);
+      parking.occupied = parking.occupied + slots;
+      await parking.save();
+    } catch (err) {
+      console.log(err);
+      res.status(400);
+      throw new Error('Change isExpired Failed');
+    }
+    res.json({ success: true, data: customer });
   } else {
     res.status(400);
-    throw new Error('Not Parking Found');
+    throw new Error(
+      !customer
+        ? 'Customer not Found'
+        : customer.status === 'active'
+        ? 'status is alreday active '
+        : 'status is cancel '
+    );
+  }
+});
+
+// @desc    Cancel Booking in Parking Area
+// @route   POSt /api/parking/cancel
+// @access  Private/Admin
+const cancelBooking = asyncHandler(async (req, res) => {
+  const customer = await Customer.findById(req.params.id);
+
+  if (customer && customer.status === 'pending') {
+    customer.status = 'cancel';
+    // customer.isExpired = true;
+    await customer.save();
+    res.json({ success: true, data: customer });
+  } else {
+    res.status(400);
+    throw new Error(
+      !customer
+        ? 'Customer not Found'
+        : customer.status === 'active'
+        ? 'status is an active '
+        : 'status is already cancel'
+    );
   }
 });
 
@@ -226,4 +229,6 @@ export {
   createBooking,
   getParkingsFromUserSide,
   getMyParking,
+  acceptBooking,
+  cancelBooking,
 };

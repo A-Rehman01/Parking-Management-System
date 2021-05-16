@@ -1,4 +1,8 @@
 import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import { Agenda } from 'agenda';
+
+dotenv.config();
 
 const customerSchema = mongoose.Schema(
   {
@@ -8,6 +12,10 @@ const customerSchema = mongoose.Schema(
       ref: 'User',
     },
     parkingID: {
+      type: String,
+      required: true,
+    },
+    parkingname: {
       type: String,
       required: true,
     },
@@ -49,8 +57,6 @@ const customerSchema = mongoose.Schema(
   },
   { timestamps: true }
 );
-const Customer = mongoose.model('Customer', customerSchema);
-export { Customer };
 
 const parkingSchema = mongoose.Schema(
   {
@@ -91,9 +97,43 @@ const parkingSchema = mongoose.Schema(
   }
 );
 
+customerSchema.methods.changeIsExpiredStatus = async function (parkingID) {
+  const agenda = new Agenda({ db: { address: process.env.MONGO_URI } });
+
+  agenda.define('Expired Status', async (job) => {
+    const { _id, slots } = job.attrs.data;
+    // console.log({ slots });
+    await Customer.findByIdAndUpdate(
+      _id,
+      { isExpired: true },
+      async function (err, docs) {
+        if (err) {
+          console.log(err);
+          // res.status(400);
+          // throw new Error('Not Update');
+          return false;
+        } else {
+          const parking = await Parking.findById(parkingID);
+          parking.occupied = parking.occupied - slots;
+          await parking.save();
+        }
+      }
+    );
+  });
+
+  await agenda.start();
+  await agenda.schedule(new Date(this.enddate), 'Expired Status', {
+    _id: this._id,
+    slots: this.slots,
+  });
+};
+
 parkingSchema.virtual('availability').get(function () {
   return this.capacity - this.occupied;
 });
+
+const Customer = mongoose.model('Customer', customerSchema);
+export { Customer };
 
 const Parking = mongoose.model('Parking', parkingSchema);
 
